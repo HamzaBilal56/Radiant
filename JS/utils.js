@@ -62,8 +62,9 @@ function closeModal() {
 }
 
 // Close modal when clicking the dark overlay behind it
-document.getElementById("modal-overlay").addEventListener("click", closeModal);
-
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById("modal-overlay").addEventListener("click", closeModal);
+});
 /* ── TOAST NOTIFICATIONS ─────────────────────────────
    type: "success" | "error" | "info"
    Auto-disappears after 3.5 seconds.
