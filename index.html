@@ -493,19 +493,19 @@
      JAVASCRIPT — load order matters:
      db → auth → utils → app → modules → boot
      ══════════════════════════════════════════ -->
-<script src="js/db.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/app.js"></script>
-<script src="js/dashboard.js"></script>
-<script src="js/students.js"></script>
-<script src="js/teachers.js"></script>
-<script src="js/attendance.js"></script>
-<script src="js/fees.js"></script>
+<script src="js/db.js"         defer></script>
+<script src="js/auth.js"       defer></script>
+<script src="js/utils.js"      defer></script>
+<script src="js/app.js"        defer></script>
+<script src="js/dashboard.js"  defer></script>
+<script src="js/students.js"   defer></script>
+<script src="js/teachers.js"   defer></script>
+<script src="js/attendance.js" defer></script>
+<script src="js/fees.js"       defer></script>
 
 <!-- Boot — resume session or show login -->
 <script>
-  (function boot() {
+  document.addEventListener("DOMContentLoaded", function () {
     // Apply saved theme before anything renders
     if (localStorage.getItem("theme") === "light") {
       document.documentElement.classList.add("light");
@@ -519,9 +519,14 @@
       document.getElementById("app").style.display = "flex";
       initApp();
     }
-
+    // Ensure the database is seeded on very first load
     getDB();
-  })();
+
+    // Allow pressing Enter on login form to submit
+    document.getElementById("l-pass").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") login();
+    });
+  });
 </script>
 
 </body>
