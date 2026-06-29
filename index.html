@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radiant School</title>
+
+  <!-- Favicon — inline SVG, no external file needed -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234f7cff'/><text y='.9em' font-size='68' font-family='Arial Black' font-weight='900' fill='white' x='50%' text-anchor='middle' dominant-baseline='middle' dy='0.05em'>R</text></svg>">
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS — layout first, then UI components -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+     Shown before the user authenticates.
+     Handled by: js/auth.js → login()
+     ══════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="logo-icon">R</span>
+      <span class="logo-name">Radiant School</span>
+    </div>
+    <h2>Welcome Back</h2>
+    <p>Sign in to your school portal</p>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="l-email" placeholder="admin@radiantschool.school" autocomplete="username">
+    </div>
+
+    <div class="field" style="position:relative">
+      <label>Password</label>
+      <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+      <button class="eye-btn" onclick="togglePw()" title="Show / hide password">👁</button>
+    </div>
+
+    <div class="field">
+      <label>Role</label>
+      <select id="l-role">
+        <option value="admin">Administrator</option>
+        <option value="teacher">Teacher</option>
+        <option value="student">Student</option>
+      </select>
+    </div>
+
+    <div id="l-error" class="error-box" style="display:none"></div>
+
+    <button class="btn-primary-login" onclick="login()">Sign In</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MAIN APPLICATION SHELL
+     Hidden until the user logs in.
+     ══════════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- ── SIDEBAR ── -->
+  <aside id="sidebar">
+    <div class="sidebar-top">
+      <span class="logo-icon">R</span>
+      <span class="logo-name">Radiant School</span>
+    </div>
+
+    <!-- Nav links built dynamically by js/app.js → buildNav() -->
+    <nav id="nav-links"></nav>
+
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar"></div>
+        <div>
+          <div class="user-name" id="user-name"></div>
+          <div class="user-role" id="user-role"></div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()" title="Sign out">⏻</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT AREA ── -->
+  <div id="main">
+
+    <!-- Topbar -->
+    <header id="topbar">
+      <button id="hamburger" onclick="toggleSidebar()">☰</button>
+      <span id="page-title">Dashboard</span>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+        <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light / dark">☀️</button>
+        <button class="icon-btn"  onclick="logout()" title="Sign out">⏻</button>
+      </div>
+    </header>
+
+    <!-- Mobile sidebar overlay (clicking it closes the sidebar) -->
+    <div id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- ── PAGES ── -->
+    <main id="content">
+
+      <!-- DASHBOARD — js/dashboard.js -->
+      <section class="page" id="page-dashboard">
+        <div class="page-hdr">
+          <h2>Dashboard</h2>
+          <span id="dash-date" style="font-size:13px;color:var(--text2)"></span>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stats-row" id="dash-stats"></div>
+
+        <!-- Chart + Notice Board row -->
+        <div class="dash-row" style="margin-top:20px">
+
+          <!-- Enrollment Chart -->
+          <div class="card dash-chart-card">
+            <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>📈 Student Enrollment</span>
+              <span id="chart-year" style="font-size:12px;color:var(--text2)"></span>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="enrollment-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Notice Board -->
+          <div class="card dash-notice-card">
+            <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>📌 Notice Board</span>
+              <button class="btn btn-sm btn-primary" id="btn-add-notice"
+                onclick="openNoticeForm()" style="display:none;">+ Post</button>
+            </div>
+            <div id="notice-list"></div>
+            <!-- Add notice form (admin only, shown inline) -->
+            <div id="notice-form" style="display:none;padding:12px;border-top:1px solid var(--border)">
+              <textarea id="notice-text"
+                placeholder="Type your announcement here…"
+                style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border2);
+                       border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;
+                       resize:vertical;min-height:72px;"></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+                <button class="btn btn-sm" onclick="cancelNotice()">Cancel</button>
+                <button class="btn btn-sm btn-primary" onclick="saveNotice()">Post Notice</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Fees Table -->
+        <div class="card" style="margin-top:20px">
+          <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>⚠ Pending & Overdue Fees</span>
+            <span id="pending-fees-count" style="font-size:12px;color:var(--red);font-weight:600;"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Class</th>
+                  <th>Amount</th>
+                  <th>Month</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="pending-fees-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card" style="margin-top:20px">
+          <div class="card-hdr">🕐 Recent Activity</div>
+          <div id="activity-feed"></div>
+        </div>
+
+      </section>
+
+      <!-- STUDENTS — js/students.js -->
+      <section class="page" id="page-students">
+        <div class="page-hdr">
+          <h2>Students</h2>
+          <button class="btn btn-primary" id="btn-add-student" onclick="openStudentForm()">+ Add Student</button>
+        </div>
+        <div class="card">
+          <div class="table-toolbar">
+            <input class="search-box" id="s-search" placeholder="Search by name or ID…" oninput="renderStudents()">
+            <select class="sel" id="s-class-filter" onchange="renderStudents()">
+              <option value="">All Classes</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th><th>ID</th><th>Class</th>
+                  <th>Parent</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="students-body"></tbody>
+            </table>
+          </div>
+          <div id="students-pages" class="pages-row"></div>
+        </div>
+      </section>
+
+      <!-- TEACHERS — js/teachers.js -->
+      <section class="page" id="page-teachers">
+        <div class="page-hdr">
+          <h2>Teachers</h2>
+          <button class="btn btn-primary" id="btn-add-teacher" onclick="openTeacherForm()">+ Add Teacher</button>
+        </div>
+        <div class="card">
+          <div class="table-toolbar">
+            <input class="search-box" id="t-search" placeholder="Search by name or subject…" oninput="renderTeachers()">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th><th>ID</th><th>Subject</th>
+                  <th>Phone</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="teachers-body"></tbody>
+            </table>
+          </div>
+          <div id="teachers-pages" class="pages-row"></div>
+        </div>
+      </section>
+
+      <!-- ATTENDANCE — js/attendance.js -->
+      <section class="page" id="page-attendance">
+        <div class="page-hdr">
+          <h2>Attendance</h2>
+          <button class="btn btn-primary" id="btn-save-att" onclick="saveAttendance()">💾 Save</button>
+        </div>
+        <div class="att-filters">
+          <input type="date" id="att-date" class="sel" onchange="loadAttCards()">
+          <select id="att-class" class="sel" onchange="loadAttCards()">
+            <option value="">Select Class</option>
+          </select>
+          <button class="btn btn-sm" onclick="markAll('Present')">✓ All Present</button>
+          <button class="btn btn-sm btn-danger" onclick="markAll('Absent')">✗ All Absent</button>
+        </div>
+        <div id="att-summary" class="att-summary" style="display:none"></div>
+        <div id="att-cards" class="att-grid"></div>
+      </section>
+
+      <!-- FEES — js/fees.js -->
+      <section class="page" id="page-fees">
+        <div class="page-hdr">
+          <h2>Fee Management</h2>
+          <button class="btn btn-primary" id="btn-add-fee" onclick="openFeeForm()">+ Record Payment</button>
+        </div>
+        <div class="stats-row" id="fee-stats"></div>
+        <div class="card" style="margin-top:16px">
+          <div class="table-toolbar">
+            <input class="search-box" id="f-search" placeholder="Search student…" oninput="renderFees()">
+            <select class="sel" id="f-status-filter" onchange="renderFees()">
+              <option value="">All Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Overdue">Overdue</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th><th>Class</th><th>Amount</th>
+                  <th>Month</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="fees-body"></tbody>
+            </table>
+          </div>
+          <div id="fees-pages" class="pages-row"></div>
+        </div>
+      </section>
+
+    </main><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+
+<!-- ══════════════════════════════════════════
+     MODALS
+     Shared overlay — js/utils.js → openModal()
+     ══════════════════════════════════════════ -->
+<div id="modal-overlay"></div>
+
+<!-- ADD / EDIT STUDENT — js/students.js → saveStudent() -->
+<div class="modal" id="modal-student">
+  <div class="modal-hdr">
+    <span id="student-modal-title">Add Student</span>
+    <button onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="field">
+        <label>First Name *</label>
+        <input id="sf-fname">
+        <span class="err" id="sf-fname-e"></span>
+      </div>
+      <div class="field">
+        <label>Last Name *</label>
+        <input id="sf-lname">
+        <span class="err" id="sf-lname-e"></span>
+      </div>
+      <div class="field">
+        <label>Date of Birth * <span style="font-size:10px;color:var(--text3)">(becomes login password)</span></label>
+        <input type="date" id="sf-dob">
+        <span class="err" id="sf-dob-e"></span>
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select id="sf-gender">
+          <option value="">Select</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Class *</label>
+        <select id="sf-class"><option value="">Select Class</option></select>
+        <span class="err" id="sf-class-e"></span>
+      </div>
+      <div class="field">
+        <label>Parent Name</label>
+        <input id="sf-parent">
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input id="sf-phone" placeholder="+92 300 0000000">
+      </div>
+      <div class="field">
+        <label>Monthly Fee ($)</label>
+        <input type="number" id="sf-fee" placeholder="500">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="sf-status">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Admission Date</label>
+        <input type="date" id="sf-admission">
+      </div>
+    </div>
+  </div>
+  <div class="modal-ftr">
+    <button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveStudent()">Save Student</button>
+  </div>
+</div>
+
+<!-- ADD / EDIT TEACHER — js/teachers.js → saveTeacher() -->
+<div class="modal" id="modal-teacher">
+  <div class="modal-hdr">
+    <span id="teacher-modal-title">Add Teacher</span>
+    <button onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="field">
+        <label>First Name *</label>
+        <input id="tf-fname">
+        <span class="err" id="tf-fname-e"></span>
+      </div>
+      <div class="field">
+        <label>Last Name *</label>
+        <input id="tf-lname">
+        <span class="err" id="tf-lname-e"></span>
+      </div>
+      <div class="field">
+        <label>Date of Birth * <span style="font-size:10px;color:var(--text3)">(becomes login password)</span></label>
+        <input type="date" id="tf-dob">
+        <span class="err" id="tf-dob-e"></span>
+      </div>
+      <div class="field">
+        <label>Subject *</label>
+        <input id="tf-subject" placeholder="e.g. Mathematics">
+        <span class="err" id="tf-subject-e"></span>
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input id="tf-phone">
+      </div>
+      <div class="field">
+        <label>Salary ($)</label>
+        <input type="number" id="tf-salary">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="tf-status">
+          <option value="Active">Active</option>
+          <option value="On Leave">On Leave</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Join Date</label>
+        <input type="date" id="tf-join">
+      </div>
+    </div>
+  </div>
+  <div class="modal-ftr">
+    <button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveTeacher()">Save Teacher</button>
+  </div>
+</div>
+
+<!-- RECORD PAYMENT — js/fees.js → saveFee() -->
+<div class="modal" id="modal-fee">
+  <div class="modal-hdr">
+    <span id="fee-modal-title">Record Payment</span>
+    <button onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1">
+        <label>Student *</label>
+        <select id="ff-student"><option value="">Select Student</option></select>
+        <span class="err" id="ff-student-e"></span>
+      </div>
+      <div class="field">
+        <label>Amount ($) *</label>
+        <input type="number" id="ff-amount">
+        <span class="err" id="ff-amount-e"></span>
+      </div>
+      <div class="field">
+        <label>Month</label>
+        <select id="ff-month">
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Due Date</label>
+        <input type="date" id="ff-due">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="ff-status">
+          <option value="Paid">Paid</option>
+          <option value="Pending">Pending</option>
+          <option value="Overdue">Overdue</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-ftr">
+    <button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveFee()">Save Payment</button>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION — js/utils.js → deleteRecord() -->
+<div class="modal" id="modal-confirm">
+  <div class="modal-hdr">
+    <span>Confirm Delete</span>
+    <button onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <p id="confirm-msg" style="color:var(--text2); line-height:1.7"></p>
+  </div>
+  <div class="modal-ftr">
+    <button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-danger" id="confirm-ok">Yes, Delete</button>
+  </div>
+</div>
+
+<!-- Toast notifications container — js/utils.js → toast() -->
+<div id="toast"></div>
+
+
+<!-- Chart.js for enrollment graph -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT — load order matters:
+     db → auth → utils → app → modules → boot
+     ══════════════════════════════════════════ -->
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/app.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/students.js"></script>
+<script src="js/teachers.js"></script>
+<script src="js/attendance.js"></script>
+<script src="js/fees.js"></script>
+
+<!-- Boot — resume session or show login -->
+<script>
+  (function boot() {
+    // Apply saved theme before anything renders
+    if (localStorage.getItem("theme") === "light") {
+      document.documentElement.classList.add("light");
+      document.getElementById("theme-btn").textContent = "🌙";
+    }
+    // If a session exists, skip login and go straight to app
+    const saved = sessionStorage.getItem("user");
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app").style.display = "flex";
+      initApp();
+    }
+
+    getDB();
+  })();
+</script>
+
+</body>
+</html>
