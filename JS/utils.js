@@ -61,10 +61,12 @@ function closeModal() {
   currentModal = null;
 }
 
-// Close modal when clicking the dark overlay behind it
+// Wait for the full HTML to load before attaching this listener
+// (modal-overlay doesn't exist yet when utils.js first runs)
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("modal-overlay").addEventListener("click", closeModal);
 });
+
 /* ── TOAST NOTIFICATIONS ─────────────────────────────
    type: "success" | "error" | "info"
    Auto-disappears after 3.5 seconds.
